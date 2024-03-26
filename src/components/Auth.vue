@@ -9,7 +9,7 @@
           type="email"
           v-model="email"
           required
-          autocomplete
+          
           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-blue-500"
         />
 
@@ -93,6 +93,8 @@ const pageTitle = ref("Login");
 const errorMessage = ref("");
 
 const handleSubmit = async () => {
+  console.log("handleSubmit function called.");
+
   try {
     const requestData = {
       email: email.value,
@@ -115,21 +117,27 @@ const handleSubmit = async () => {
     );
 
     if (response.ok) {
+      const responseData = await response.json();
+      const token = responseData.token;
+      sessionStorage.setItem("token", token);
+      sessionStorage.setItem("tokenExpiration", Date.now() + 10 * 60 * 1000); // 10 minutes expiration
       name.value = "";
       email.value = "";
       password.value = "";
+
+      // Emit the login event when login is successful
+      if (isLogin.value) {
+        router.push("/"); // Redirect to home page after successful login
+      } else {
+        togglePage();
+      }
+
+      console.log("Login successful. Emitting login event...");
 
       // Check if the component instance exists before emitting
       const instance = getCurrentInstance();
       if (instance) {
         instance.emit("login");
-      }
-
-      if (isLogin.value) {
-        router.push("/home");
-        console.log("logged");
-      } else {
-        togglePage();
       }
     } else {
       const responseData = await response.json();
@@ -146,6 +154,7 @@ const handleSubmit = async () => {
 };
 
 const togglePage = () => {
+  console.log("Toggling login/register page.");
   isLogin.value = !isLogin.value;
   pageTitle.value = isLogin.value ? "Login" : "Register";
   errorMessage.value = "";
