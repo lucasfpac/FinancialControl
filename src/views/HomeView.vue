@@ -9,11 +9,8 @@ import TransactionList from '../components/TransactionList.vue';
 
 export default {
   components: {
-    TransactionList
+    TransactionList,
   }
 };
 </script>
 
-<style scoped>
-/* Your scoped styles */
-</style>

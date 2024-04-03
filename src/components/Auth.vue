@@ -9,7 +9,6 @@
           type="email"
           v-model="email"
           required
-          
           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-blue-500"
         />
 
@@ -72,7 +71,7 @@
 
         <p class="mt-4">
           Already have an account?
-          <button @click="togglePage" class="text-blue">Login</button>
+          <button @click="togglePage" class="text-blue-500">Login</button>
         </p>
       </div>
     </form>
@@ -81,83 +80,172 @@
   </div>
 </template>
 
-<script setup>
-import { ref, getCurrentInstance } from "vue";
+<script>
+import { ref, onMounted, onUnmounted, getCurrentInstance } from "vue";
 import router from "../router";
 
-const name = ref("");
-const email = ref("");
-const password = ref("");
-const isLogin = ref(true);
-const pageTitle = ref("Login");
-const errorMessage = ref("");
+export default {
+  emits: ["login-success"],
 
-const handleSubmit = async () => {
-  console.log("handleSubmit function called.");
+  setup(_, context) {
+    const name = ref("");
+    const email = ref("");
+    const password = ref("");
+    const isLogin = ref(true);
+    const pageTitle = ref("Login");
+    const errorMessage = ref("");
 
-  try {
-    const requestData = {
-      email: email.value,
-      senha: password.value,
+    const INACTIVITY_TIMEOUT = 10 * 60 * 1000;
+
+    let inactivityTimer;
+    let expiration;
+
+    const resetTimer = () => {
+      clearTimeout(inactivityTimer);
+      inactivityTimer = setTimeout(logoutDueToInactivity, INACTIVITY_TIMEOUT);
     };
 
-    if (!isLogin.value) {
-      requestData.name = name.value;
-    }
+    const logoutDueToInactivity = () => {
+      logout();
+    };
 
-    const response = await fetch(
-      isLogin.value ? "/api/login" : "/api/register",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(requestData),
+    onMounted(() => {
+      resetTimer();
+      ["mousemove", "mousedown", "keypress", "touchmove", "scroll"].forEach(
+        (event) => {
+          window.addEventListener(event, resetTimer, false);
+        }
+      );
+    });
+
+    onUnmounted(() => {
+      ["mousemove", "mousedown", "keypress", "touchmove", "scroll"].forEach(
+        (event) => {
+          window.removeEventListener(event, resetTimer, false);
+        }
+      );
+    });
+
+    const handleSubmit = async () => {
+      try {
+        expiration = new Date();
+        expiration.setTime(expiration.getTime() + INACTIVITY_TIMEOUT);
+
+        sessionStorage.setItem("tokenExpiration", expiration.toISOString());
+
+        const requestData = {
+          email: email.value,
+          senha: password.value,
+        };
+
+        if (!isLogin.value) {
+          requestData.name = name.value;
+        }
+
+        const response = await fetch(
+          isLogin.value ? "/api/login" : "/api/register",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(requestData),
+          }
+        );
+
+        if (response.ok) {
+          const responseData = await response.json();
+
+          const { token, userId, nome, email: userEmail, foto } = responseData;
+
+          sessionStorage.setItem("token", token);
+
+          //test
+
+          // Inside the handleSubmit function after receiving the API response
+          console.log("API Response Data:", responseData);
+          console.log("User data before parsing:", responseData);
+
+          // Check if responseData contains user data
+          if (responseData) {
+            // Convert Blob data to Blob URL
+            const fotoBlob = new Blob([foto]);
+            const fotoURL = URL.createObjectURL(fotoBlob);
+
+            // Store the Blob URL in sessionStorage
+            sessionStorage.setItem("fotoURL", fotoURL);
+
+            // Remove the Blob data from responseData to avoid storage quota issues
+            delete responseData.foto;
+
+            sessionStorage.setItem("user", JSON.stringify(responseData));
+
+            console.log("User data after parsing:", responseData);
+          } else {
+            console.error("User data is undefined. Unable to parse.");
+          }
+
+          // end test
+          const expiration = new Date();
+          expiration.setMinutes(expiration.getMinutes() + 10);
+          sessionStorage.setItem("tokenExpiration", expiration.toISOString());
+
+          sessionStorage.setItem("userId", userId);
+          sessionStorage.setItem("nome", nome);
+          sessionStorage.setItem("email", userEmail);
+          // Do not store foto here anymore
+          sessionStorage.setItem("isAuthenticated", "true");
+          // Inside the handleSubmit function after saving user data to sessionStorage
+          console.log("User data saved to sessionStorage:", responseData.user);
+
+          router.push("/");
+
+          name.value = "";
+          email.value = "";
+          password.value = "";
+          errorMessage.value = "";
+
+          console.log(
+            "Login successful. User information saved in sessionStorage."
+          );
+          // Emit login success event with user data
+          const userData = { userId, nome, email: userEmail, foto };
+          context.emit("login-success", userData);
+        } else {
+          console.error("Login failed. Status:", response.status);
+          const responseData = await response.json();
+          errorMessage.value =
+            responseData.message ||
+            (isLogin.value ? "Login failed" : "Registration failed");
+
+          email.value = "";
+          password.value = "";
+        }
+      } catch (error) {
+        console.error("Error:", error);
+        errorMessage.value = isLogin.value
+          ? "An error occurred during login"
+          : "An error occurred during registration";
       }
-    );
+    };
 
-    if (response.ok) {
-      const responseData = await response.json();
-      const token = responseData.token;
-      sessionStorage.setItem("token", token);
-      sessionStorage.setItem("tokenExpiration", Date.now() + 10 * 60 * 1000); // 10 minutes expiration
-      name.value = "";
-      email.value = "";
-      password.value = "";
+    const togglePage = () => {
+      isLogin.value = !isLogin.value;
+      pageTitle.value = isLogin.value ? "Login" : "Register";
+      errorMessage.value = "";
+    };
 
-      // Emit the login event when login is successful
-      if (isLogin.value) {
-        router.push("/"); // Redirect to home page after successful login
-      } else {
-        togglePage();
-      }
-
-      console.log("Login successful. Emitting login event...");
-
-      // Check if the component instance exists before emitting
-      const instance = getCurrentInstance();
-      if (instance) {
-        instance.emit("login");
-      }
-    } else {
-      const responseData = await response.json();
-      errorMessage.value =
-        responseData.error ||
-        (isLogin.value ? "Login failed" : "Registration failed");
-    }
-  } catch (error) {
-    console.error("Error:", error);
-    errorMessage.value = isLogin.value
-      ? "An error occurred during login"
-      : "An error occurred during registration";
-  }
-};
-
-const togglePage = () => {
-  console.log("Toggling login/register page.");
-  isLogin.value = !isLogin.value;
-  pageTitle.value = isLogin.value ? "Login" : "Register";
-  errorMessage.value = "";
+    return {
+      name,
+      email,
+      password,
+      isLogin,
+      pageTitle,
+      errorMessage,
+      handleSubmit,
+      togglePage,
+    };
+  },
 };
 </script>
 

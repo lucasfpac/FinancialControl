@@ -13,7 +13,9 @@
       v-if="isVisible"
       class="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center"
     >
-      <div class="bg-gray-800 border border-white p-8 rounded-lg shadow-md w-96">
+      <div
+        class="bg-gray-800 border border-white p-8 rounded-lg shadow-md w-96"
+      >
         <h2 class="text-lg font-semibold mb-4">Add Transaction</h2>
         <!-- Form fields to add new transaction -->
         <form @submit.prevent="handleSubmit">
@@ -75,56 +77,62 @@
   </div>
 </template>
 
-<script>
+<script setup>
 import { ref } from "vue";
 import CategoryDropdown from "./CategoryDropdown.vue";
+import axios from "axios";
 
-export default {
-  components: {
-    CategoryDropdown,
-  },
-  setup() {
-    // Refs for form fields and modal visibility
-    const isVisible = ref(false);
-    const description = ref("");
-    const amount = ref(0);
-    const selectedCategory = ref("");
-    const date = ref("");
+// Refs for form fields and modal visibility
+const isVisible = ref(false);
+const description = ref("");
+const amount = ref(0);
+const selectedCategory = ref("");
+const date = ref("");
+const errorMessage = ref("");
 
-    // Function to handle form submission
-    const handleSubmit = () => {
-      // Logic to add new transaction
+// Function to handle form submission
+const handleSubmit = async () => {
+  try {
+    const userId = sessionStorage.getItem('userId'); // Fetch userId inside handleSubmit
+    const requestData = {
+      descricao: description.value,
+      valor: amount.value,
+      category_id: selectedCategory.value,
+      data: date.value,
+      user_id: userId,
     };
 
-    // Function to open modal
-    const openModal = () => {
-      isVisible.value = true;
-    };
+    // Send a request to add a new transaction
+    const response = await axios.post("/api/transactions", requestData);
+    // Close the modal
+    isVisible.value = false;
+    // Reset form fields
+    description.value = "";
+    amount.value = 0;
+    selectedCategory.value = "";
+    date.value = "";
+    // Fetch the updated list of transactions
+    fetchTransactions();
+  } catch (error) {
+    console.error("Error adding transaction:", error);
+  }
+};
 
-    // Function to close modal
-    const closeModal = () => {
-      isVisible.value = false;
-      // Reset form fields
-      description.value = "";
-      amount.value = 0;
-      selectedCategory.value = "";
-      date.value = "";
-    };
 
-    return {
-      isVisible,
-      description,
-      amount,
-      selectedCategory,
-      date,
-      handleSubmit,
-      openModal,
-      closeModal,
-    };
-  },
+
+// Function to open modal
+const openModal = () => {
+  isVisible.value = true;
+};
+
+// Function to close modal
+const closeModal = () => {
+  isVisible.value = false;
+  // Reset form fields
+  description.value = "";
+  amount.value = 0;
+  selectedCategory.value = "";
+  date.value = "";
+  errorMessage.value = "";
 };
 </script>
-
-<style scoped>
-/* Your scoped styles */
-</style>

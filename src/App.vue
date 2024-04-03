@@ -1,6 +1,6 @@
 <template>
   <div id="app">
-    <Navbar :isLoggedIn="isLoggedIn" @logout="logoutHandler" />
+    <Navbar />
     <!-- Other content -->
     <router-view />
   </div>
@@ -22,7 +22,7 @@ const logoutHandler = () => {
 onMounted(() => {
   // Redirect the user to the home page if already logged in
   if (isLoggedIn.value) {
-    router.push("/home");
+    router.push("/");
   }
 });
 </script>
