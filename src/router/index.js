@@ -62,7 +62,6 @@ axios.interceptors.response.use(
         originalRequest.headers.Authorization = `Bearer ${newToken}`;
         return axios(originalRequest);
       } catch (error) {
-        console.error("Error refreshing token:", error);
         // Redirect to login page if token refresh fails
         router.push("/login");
         return Promise.reject(error);
@@ -76,22 +75,13 @@ router.beforeEach(async (to, from, next) => {
   const isAuthenticated = sessionStorage.getItem("token"); // Use sessionStorage to check token
   const tokenExpiration = sessionStorage.getItem("tokenExpiration"); // Use sessionStorage for token expiration
 
-  console.log("Route:", to.path);
-  console.log("Requires Auth:", to.meta.requiresAuth);
-  console.log("Is Authenticated:", isAuthenticated);
-
+  
   // Check if the route requires authentication
   if (to.matched.some((record) => record.meta.requiresAuth)) {
     // If not authenticated or token has expired, redirect to login page
     if (!isAuthenticated || new Date() > new Date(tokenExpiration)) {
-      console.log(
-        "User is not authenticated or token has expired. Redirecting to login page."
-      );
       next("/login");
     } else {
-      console.log(
-        "User is authenticated and token is valid. Proceeding to requested route."
-      );
       next();
     }
   } else {
@@ -101,16 +91,5 @@ router.beforeEach(async (to, from, next) => {
     next(); // Allow access to non-authenticated routes
   }
 });
-
-// Logout function to clear token and user information
-export function logout() {
-  sessionStorage.removeItem("token");
-  sessionStorage.removeItem("tokenExpiration");
-  sessionStorage.removeItem("userId");
-  sessionStorage.removeItem("nome");
-  sessionStorage.removeItem("email");
-  sessionStorage.removeItem("foto");
-  router.push("/login");
-}
 
 export default router;

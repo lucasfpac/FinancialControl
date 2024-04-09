@@ -41,14 +41,10 @@ export default {
           const user = JSON.parse(userData);
           if (user) {
             userName.value = user.nome;
-            console.log("nome", user.nome);
-
             if (user.fotoURL) {
               userFoto.value = user.fotoURL;
               console.log("foto", user.fotoURL);
             }else{
-              console.log("foto", user.fotoURL);
-
               console.log("sem foto");
             }
           }

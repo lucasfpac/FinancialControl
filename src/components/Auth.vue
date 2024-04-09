@@ -182,12 +182,12 @@ export default {
           //test
 
           // Inside the handleSubmit function after receiving the API response
-          console.log("API Response Data:", responseData);
-          console.log("User data before parsing:", responseData);
+          // console.log("API Response Data:", responseData);
+          // console.log("User data before parsing:", responseData);
 
           // Check if responseData contains user data
           if (responseData) {
-            console.log(responseData);
+            // console.log(responseData);
             // Convert Blob data to Blob URL
             const fotoBlob = new Blob([foto], {type: 'image/jpeg'});
 
@@ -202,7 +202,7 @@ export default {
 
             sessionStorage.setItem("user", JSON.stringify(responseData));
 
-            console.log("User data after parsing:", responseData);
+            // console.log("User data after parsing:", responseData);
           } else {
             console.error("User data is undefined. Unable to parse.");
           }
@@ -227,9 +227,9 @@ export default {
           password.value = "";
           errorMessage.value = "";
 
-          console.log(
-            "Login successful. User information saved in sessionStorage."
-          );
+          // console.log(
+          //   "Login successful. User information saved in sessionStorage."
+          // );
           // Emit login success event with user data
           const userData = { userId, nome, email: userEmail, foto };
           context.emit("login-success", userData);
