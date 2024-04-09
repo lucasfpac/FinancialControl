@@ -4,6 +4,7 @@ import axios from "axios";
 // Import your components
 import Home from "../views/HomeView.vue";
 import Login from "../views/LoginView.vue";
+import profile from "../views/ProfileView.vue"
 
 const routes = [
   {
@@ -16,6 +17,11 @@ const routes = [
     path: "/login",
     name: "Login",
     component: Login,
+  },
+  {
+    path: "/profile",
+    name: "profile",
+    component: profile,
   },
 ];
 

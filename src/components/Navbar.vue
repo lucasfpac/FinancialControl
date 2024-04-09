@@ -26,6 +26,7 @@ import router from "../router";
 
 export default {
   setup() {
+    
     const isLoggedIn = ref(false);
     const userName = ref("");
     const userFoto = ref("");
@@ -43,9 +44,11 @@ export default {
             console.log("nome", user.nome);
 
             if (user.fotoURL) {
-              userFoto.value = fotoURL;
+              userFoto.value = user.fotoURL;
               console.log("foto", user.fotoURL);
             }else{
+              console.log("foto", user.fotoURL);
+
               console.log("sem foto");
             }
           }
@@ -71,6 +74,7 @@ export default {
 
       // Redirect to login page
       router.push("/login");
+      
     };
 
     return {
@@ -80,5 +84,11 @@ export default {
       logout,
     };
   },
+  computed: {
+  fotoURL() {
+    return sessionStorage.getItem('fotoURL');
+  }
+}
+
 };
 </script>

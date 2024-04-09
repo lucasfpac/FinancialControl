@@ -83,6 +83,7 @@
 <script>
 import { ref, onMounted, onUnmounted, getCurrentInstance } from "vue";
 import router from "../router";
+import logout from './Navbar.vue'
 
 export default {
   emits: ["login-success"],
@@ -106,7 +107,24 @@ export default {
     };
 
     const logoutDueToInactivity = () => {
-      logout();
+      alert('Logging out due to inactivity');
+         // Clear user data and logout
+         sessionStorage.removeItem("token");
+      sessionStorage.removeItem("user");
+      sessionStorage.removeItem("tokenExpiration");
+      sessionStorage.removeItem("userId");
+      sessionStorage.removeItem("nome");
+      sessionStorage.removeItem("email");
+      sessionStorage.removeItem("foto");
+      sessionStorage.removeItem("isAuthenticated");
+
+      // Update login status
+      isLoggedIn.value = false;
+      console.log(isLoggedIn);
+
+      // Redirect to login page
+      router.push("/login");
+      logout(); // vindo do navbar??
     };
 
     onMounted(() => {
@@ -159,6 +177,7 @@ export default {
           const { token, userId, nome, email: userEmail, foto } = responseData;
 
           sessionStorage.setItem("token", token);
+          
 
           //test
 
@@ -168,10 +187,13 @@ export default {
 
           // Check if responseData contains user data
           if (responseData) {
+            console.log(responseData);
             // Convert Blob data to Blob URL
-            const fotoBlob = new Blob([foto]);
-            const fotoURL = URL.createObjectURL(fotoBlob);
+            const fotoBlob = new Blob([foto], {type: 'image/jpeg'});
 
+            console.log(fotoBlob);
+            const fotoURL = URL.createObjectURL(fotoBlob);
+            console.log(fotoURL);
             // Store the Blob URL in sessionStorage
             sessionStorage.setItem("fotoURL", fotoURL);
 
